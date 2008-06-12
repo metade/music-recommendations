@@ -1,15 +1,21 @@
 require 'rubygems'
+require 'json'
 require 'camping'
-require 'rbrainz'
-require 'lib/semantic_space_recommender'
+require 'mime/types'
 
-require 'pp'
+require 'lib/semantic_space_recommender'
 
 include SemanticSpace
 
 class ArtistRecommendation
   def name
     @name ||= MusicRecommendations.artists[self.gid]
+  end
+  def <=>(other)
+    self.name <=> other.name
+  end
+  def to_hash
+    { :gid => gid, :name => name, :score => score }
   end
 end
 
@@ -19,6 +25,9 @@ class BrandRecommendation
   end
   def <=>(other)
     self.title <=> other.title
+  end
+  def to_hash
+    { :pid => pid, :title => title, :score => score }
   end
 end
 
@@ -36,6 +45,15 @@ module MusicRecommendations
   def self.recommender
     @@recommender ||= SemanticSpaceRecommender.new('data/brand_space.llss')
   end
+  
+  def accept(format=nil)
+    if (format and format =~ /.js(on)?/)
+      'application/json'
+    else
+      env.ACCEPT.nil? ? (env.HTTP_ACCEPT.nil? ? 'text/html' : env.HTTP_ACCEPT) : env.ACCEPT
+    end
+  end  
+  
 end
 
 module MusicRecommendations::Controllers
@@ -50,12 +68,21 @@ module MusicRecommendations::Controllers
     end
   end
 
-  class Artist < R '/artists/(.+)'
-    def get(mbid)
+  class Artist < R '/artists/([\w\d-]{36})(.*?)'
+    def get(mbid, format=nil)
       @artist = ArtistRecommendation.new(mbid)
       @recommended_artists = MusicRecommendations::recommender.artist_artists(mbid)
       @recommended_brands = MusicRecommendations::recommender.artist_brands(mbid)
-      render :artist
+
+      case accept(format)
+        when %r{application/json}
+          @headers['Content-Type'] = 'application/json'
+          { :artist => @artist.to_hash,
+            :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+            :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+          }.to_json
+        else render :artist
+      end
     end
   end
   
@@ -66,12 +93,21 @@ module MusicRecommendations::Controllers
     end
   end
 
-  class Brand < R '/brands/(.+)'
-    def get(brand)
+  class Brand < R '/brands/([\w\d]{8})(.*?)'
+    def get(brand, format=nil)
       @brand = BrandRecommendation.new(brand)
       @recommended_brands = MusicRecommendations::recommender.brand_brands(brand)
       @recommended_artists = MusicRecommendations::recommender.brand_artists(brand)
-      render :brand
+
+      case accept(format)
+        when %r{application/json}
+          @headers['Content-Type'] = 'application/json'
+          { :brand => @brand.to_hash,
+            :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+            :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+          }.to_json
+        else render :brand
+      end
     end
   end
 end
@@ -144,7 +180,7 @@ module MusicRecommendations::Views
     ol do 
       for brand in brands
         li do 
-          a brand.title, :href =>  R(Brand, brand.pid)
+          a brand.title, :href =>  R(Brand, brand.pid, nil)
           span { text " (#{brand.score})" }
         end
       end
@@ -155,7 +191,7 @@ module MusicRecommendations::Views
     ol do 
       for artist in artists
         li do 
-          a artist.name, :href =>  R(Artist, artist.gid)
+          a artist.name, :href =>  R(Artist, artist.gid, nil)
           span { text " (#{artist.score})" }
         end
       end
