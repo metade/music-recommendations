@@ -1,23 +1,38 @@
+require 'rubygems'
 require 'camping'
-require 'pp'
 require 'rbrainz'
 require 'lib/semantic_space_recommender'
+
+require 'pp'
 
 include SemanticSpace
 
 class ArtistRecommendation
-  def artist
-    return @rbrainz_artist unless @rbrainz_artist.nil?
-    query  = MusicBrainz::Webservice::Query.new
-    artist_includes = MusicBrainz::Webservice::ArtistIncludes.new(
-      :url_rels     => true
-    )
-    @rbrainz_artist = query.get_artist_by_id(self.gid, artist_includes)
+  def name
+    @name ||= MusicRecommendations.artists[self.gid]
+  end
+end
+
+class BrandRecommendation
+  def title
+    @title ||= MusicRecommendations.brands[self.pid]
+  end
+  def <=>(other)
+    self.title <=> other.title
   end
 end
 
 Camping.goes :MusicRecommendations
 module MusicRecommendations
+
+  def self.artists
+    @@artists ||= YAML.load_file('data/artists.yml')    
+  end
+
+  def self.brands
+    @@brands = YAML.load_file('data/brands.yml')    
+  end
+
   def self.recommender
     @@recommender ||= SemanticSpaceRecommender.new('data/brand_space.llss')
   end
@@ -37,23 +52,23 @@ module MusicRecommendations::Controllers
 
   class Artist < R '/artists/(.+)'
     def get(mbid)
-      @artist = Models::Artist.find(mbid)
-      @recommended_artists = $recommender.artist_artists(mbid)
-      @recommended_brands = $recommender.artist_brands(mbid)
+      @artist = ArtistRecommendation.new(mbid)
+      @recommended_artists = MusicRecommendations::recommender.artist_artists(mbid)
+      @recommended_brands = MusicRecommendations::recommender.artist_brands(mbid)
       render :artist
     end
   end
   
   class Brands < R '/brands'
     def get
-      @brands = MusicRecommendations::recommender.brands
+      @brands = MusicRecommendations::recommender.brands.sort
       render :brands
     end
   end
 
   class Brand < R '/brands/(.+)'
     def get(brand)
-      @brand = brand
+      @brand = BrandRecommendation.new(brand)
       @recommended_brands = MusicRecommendations::recommender.brand_brands(brand)
       @recommended_artists = MusicRecommendations::recommender.brand_artists(brand)
       render :brand
@@ -86,21 +101,15 @@ module MusicRecommendations::Views
   
   def artist
     div.header! do
-      h1 @artist.name
+      h1 'Artist: ' + @artist.name
     end
-    img :src => "http://67.207.137.75/recommenders/images/themeriver/artists_by_service/#{@artist.id}.png"
-    text ' | '
-    img :src => "http://67.207.137.75/recommenders/images/themeriver/artists_by_brand/#{@artist.id}.png"
-    h2 'Recommended Artists'    
-    render_artists(@recommended_artists)
-    h2 'Recommended Brands'
-    ol do 
-      for result in @recommended_brands
-        li do 
-          span { a result[:brand], :href =>  R(Brand, result[:brand]) }
-          span { text " (#{result[:score]})" }
-        end
-      end
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Brands'
+      render_brands(@recommended_brands)
+    end
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Artists'    
+      render_artists(@recommended_artists)
     end
   end
     
@@ -110,37 +119,44 @@ module MusicRecommendations::Views
     end
     ol do 
       for brand in @brands
-        li { a brand, :href=>R(Brand, brand) }
+        li { a brand.title, :href=>R(Brand, brand.pid) }
       end
     end
   end
   
   def brand
     div.header! do
-      h1 @brand
+      h1 'Brand: ' + @brand.title
     end
-    h2 'Recommended Brands'
-    ol do 
-      for result in @recommended_brands
-        li do
-          span { a result[:brand], :href =>  R(Brand, result[:brand]) }
-          span { text " (#{result[:score]})" }
-        end 
-      end
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Brands'
+      render_brands(@recommended_brands)
     end
-    h2 'Recommended Artists'
-    render_artists(@recommended_artists)
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Artists'
+      render_artists(@recommended_artists)
+    end
   end
   
   private 
+
+  def render_brands(brands)
+    ol do 
+      for brand in brands
+        li do 
+          a brand.title, :href =>  R(Brand, brand.pid)
+          span { text " (#{brand.score})" }
+        end
+      end
+    end
+  end
   
   def render_artists(artists)
     ol do 
-      for result in artists
+      for artist in artists
         li do 
-          a result.gid, :href =>  R(Artist, result.gid)
-          text ' '
-          span { text " (result.score)" }
+          a artist.name, :href =>  R(Artist, artist.gid)
+          span { text " (#{artist.score})" }
         end
       end
     end
