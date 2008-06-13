@@ -16,8 +16,8 @@ class BrandRecommendation
 end
 
 class SemanticSpaceRecommender
-  def initialize(ss_file)
-    @dimensions = 100
+  def initialize(ss_file, dimensions=44)
+    @dimensions = dimensions
     @semanticspace = SemanticSpace::read_semanticspace(ss_file)
   end
   

@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'yaml'
 require 'json'
 require 'camping'
 require 'mime/types'
@@ -9,7 +10,7 @@ include SemanticSpace
 
 class ArtistRecommendation
   def name
-    @name ||= MusicRecommendations.artists[self.gid]
+    @name ||= MusicRecommendations.artists[self.gid] or self.gid
   end
   def <=>(other)
     self.name <=> other.name
@@ -21,7 +22,7 @@ end
 
 class BrandRecommendation
   def title
-    @title ||= MusicRecommendations.brands[self.pid]
+    @title ||= MusicRecommendations.brands[self.pid] or self.pid
   end
   def <=>(other)
     self.title <=> other.title
@@ -34,16 +35,20 @@ end
 Camping.goes :MusicRecommendations
 module MusicRecommendations
 
+  def self.config
+    @@config ||= YAML.load_file('config/semantic_space.yml')
+  end
+
   def self.artists
-    @@artists ||= YAML.load_file('data/artists.yml')    
+    @@artists ||= YAML.load_file(config[:artists]) or {}
   end
 
   def self.brands
-    @@brands = YAML.load_file('data/brands.yml')    
+    @@brands = YAML.load_file(config[:brands]) or {}
   end
 
   def self.recommender
-    @@recommender ||= SemanticSpaceRecommender.new('data/brand_space.llss')
+    @@recommender ||= SemanticSpaceRecommender.new(config[:space], config[:k])
   end
   
   def accept(format=nil)
@@ -93,7 +98,7 @@ module MusicRecommendations::Controllers
     end
   end
 
-  class Brand < R '/brands/([\w\d]{8})(.*?)'
+  class Brand < R '/brands/([\w\d]{8})(.*)'
     def get(brand, format=nil)
       @brand = BrandRecommendation.new(brand)
       @recommended_brands = MusicRecommendations::recommender.brand_brands(brand)
@@ -155,7 +160,7 @@ module MusicRecommendations::Views
     end
     ol do 
       for brand in @brands
-        li { a brand.title, :href=>R(Brand, brand.pid) }
+        li { a brand.title, :href=>R(Brand, brand.pid, nil) }
       end
     end
   end

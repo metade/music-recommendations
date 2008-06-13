@@ -1,0 +1,39 @@
+== Music Recommendations
+
+by Patrick Sinclair
+
+== Description
+
+A toolset for playing with recommendation systems for music.
+
+Current Algorithms supported:
+ * Semantic Space: https://forge.ecs.soton.ac.uk/projects/semanticspace/ 
+
+== Installation
+
+Install Semantic Space from:
+https://forge.ecs.soton.ac.uk/projects/semanticspace/ 
+
+TODO...
+
+== Example
+
+Configure your +semantic_space.yml+ file, using the example provided as a guide.
+
+To build the Semantic Space:
+
+	ssmake data/test_space.llss data/test_space.txt
+
+To search the Semantic Space from the command line:
+
+Finds the brands recommended for an artist:
+	ssfind -k 10 -train -nodoc data/test_space.llss 79239441-bfd5-4981-a70c-55c3f15c1287
+
+Finds brands and artists recommended for an artist:
+	ssfind -k 10 -train -nodoc -term data/test_space.llss 79239441-bfd5-4981-a70c-55c3f15c1287
+
+
+To start up the Music Recommendations web app:
+
+	camping music_recommendations.rb
+
