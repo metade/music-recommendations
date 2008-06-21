@@ -21,6 +21,10 @@ class SemanticSpaceRecommender
     @semanticspace = SemanticSpace::read_semanticspace(ss_file)
   end
   
+  def artists
+    return @semanticspace.list_terms.map { |a| ArtistRecommendation.new(a) }
+  end
+  
   def brands
     return @semanticspace.list_docs(true).map { |b| BrandRecommendation.new(b) }
   end
@@ -43,6 +47,20 @@ class SemanticSpaceRecommender
   def brand_brands(brand, limit=20)
     results = @semanticspace.search_with_doc(brand, true, TRAINING_DOCUMENT_SPACE, @dimensions, limit)    
     return transform_brand_results(results)
+  end
+
+  def query_brands(artists, limit=20)
+    query = @semanticspace.construct_empty_query
+    artists.keys.each { |gid| @semanticspace.add_term_to_query(query, gid, artists[gid]) }
+    results = @semanticspace.search_with_query(query, TRAINING_DOCUMENT_SPACE, @dimensions, limit)
+    return transform_brand_results(results)
+  end
+
+  def query_artists(artists, limit=20)
+    query = @semanticspace.construct_empty_query
+    artists.keys.each { |gid| @semanticspace.add_term_to_query(query, gid, artists[gid]) }
+    results = @semanticspace.search_with_query(query, TERM_SPACE, @dimensions, limit)
+    return transform_artist_results(results)
   end
 
   private

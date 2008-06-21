@@ -4,7 +4,10 @@ require 'json'
 require 'camping'
 require 'mime/types'
 
+require 'pp'
+
 require 'lib/semantic_space_recommender'
+require 'lib/last_fm_profile'
 
 include SemanticSpace
 
@@ -70,6 +73,8 @@ module MusicRecommendations::Controllers
   
   class Artists < R '/artists'
     def get
+      @artists = MusicRecommendations::recommender.artists
+      render :artists
     end
   end
 
@@ -115,6 +120,16 @@ module MusicRecommendations::Controllers
       end
     end
   end
+
+  class MyRecommendations < R '/recommend/lastfm/(.*)'
+    def get(profile)
+      @profile = profile
+      top_artists = LastFmProfile.new(@profile).top_artists
+      @recommended_brands = MusicRecommendations::recommender.query_brands(top_artists)
+      @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
+      render :my_recommendations
+    end
+  end
 end
 
 module MusicRecommendations::Views
@@ -140,6 +155,17 @@ module MusicRecommendations::Views
     end    
   end
   
+  def artists
+    div.header! do
+      h1 'List of Artists'
+    end
+    ol do 
+      for artist in @artists
+        li { a artist.name, :href=>R(Brand, artist.gid, nil) }
+      end
+    end
+  end
+  
   def artist
     div.header! do
       h1 'Artist: ' + @artist.name
@@ -162,6 +188,20 @@ module MusicRecommendations::Views
       for brand in @brands
         li { a brand.title, :href=>R(Brand, brand.pid, nil) }
       end
+    end
+  end
+  
+  def my_recommendations
+    div.header! do
+      h1 "Recommendations for #{@profile}"
+    end
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Brands'
+      render_brands(@recommended_brands)
+    end
+    div :style => 'float:left;clear:right;margin-right:10px' do    
+      h2 'Recommended Artists'
+      render_artists(@recommended_artists)
     end
   end
   
