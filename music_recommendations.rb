@@ -202,7 +202,7 @@ module MusicRecommendations::Views
     p { 'Based on playout data for Radio1, 1Xtra, Radio2 and 6Music from September 2007 until mid-June 2008. ' }
     p { 'See <a href="http://mashed-audioandmusic.dyndns.org/#brandsartists">BBC Audio & Music Interactive at Mashed 2008</a> for more details.' }
 
-    h2 'about the recommendation engine'
+    h2 'about the recommendations'
     p { 'Based on <a href="http://en.wikipedia.org/wiki/Latent_semantic_analysis">Latent Semantic Analysis</a>, a technique used in Information Retrieval. '       }
 
     p { 'Build a term-document matrix based on the artist play per brand: artists are terms, brands are documents.' }
@@ -212,7 +212,8 @@ module MusicRecommendations::Views
       li { text 'recommend brands/artists based on another artist ' ; a '(example)', :href => R(Artist, 'ada7a83c-e3e1-40f1-93f9-3e73dbc9298a', nil) }
       li { text 'recommend brands/artists based on a last.fm profile ' ; a '(example)', :href => R(MyRecommendations, 'metade') }
     end
-    
+
+    h2 'about the recommendation engine'
     p { 'Uses the <a href="http://semanticspace.forge.ecs.soton.ac.uk">Semantic Space</a> engine developed at the <a href="http://www.ecs.soton.ac.uk">University of Southampton</a> by <a href="http://users.ecs.soton.ac.uk/jsh2/">Jonathon Hare</a>.' }
   end
   
