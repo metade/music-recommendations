@@ -183,12 +183,11 @@ module MusicRecommendations::Views
       a 'track play-out data', :href => 'http://mashed-audioandmusic.dyndns.org/#brandsartists' 
       text ' from BBC Radio 1, Radio 2, 6Music and 1Xtra'
     end
-    p { 'Browse by ' } 
-    ul do
-      li { a 'Artists', :href => R(Artists) }
-      li { a 'Brands', :href => R(Brands) }
+    p do 
+      text 'Start by browsing by '; a 'artists', :href => R(Artists)
+      text ' or '; a 'brands', :href => R(Brands); text ', i.e. shows/djs'      
     end
-    p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }
+    p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }    
     form :method => :get, :action => '/recommend/lastfm/' do
       input :name => 'profile', :type => 'text'
       input :type => :submit
@@ -205,6 +204,15 @@ module MusicRecommendations::Views
 
     h2 'about the recommendation engine'
     p { 'Based on <a href="http://en.wikipedia.org/wiki/Latent_semantic_analysis">Latent Semantic Analysis</a>, a technique used in Information Retrieval. '       }
+
+    p { 'Build a term-document matrix based on the artist play per brand: artists are terms, brands are documents.' }
+    p { 'With latent semantic indexing, we map this data into a n-dimensional space that let\'s us: ' }
+    ul do
+      li { text 'recommend brands/artists based on another brand ' ; a '(example)', :href => R(Brand, 'b006wkqb', nil) }
+      li { text 'recommend brands/artists based on another artist ' ; a '(example)', :href => R(Artist, 'ada7a83c-e3e1-40f1-93f9-3e73dbc9298a', nil) }
+      li { text 'recommend brands/artists based on a last.fm profile ' ; a '(example)', :href => R(MyRecommendations, 'metade') }
+    end
+    
     p { 'Uses the <a href="http://semanticspace.forge.ecs.soton.ac.uk">Semantic Space</a> engine developed at the <a href="http://www.ecs.soton.ac.uk">University of Southampton</a> by <a href="http://users.ecs.soton.ac.uk/jsh2/">Jonathon Hare</a>.' }
   end
   
