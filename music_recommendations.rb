@@ -246,37 +246,29 @@ module MusicRecommendations::Views
   def _recommended_artists
     div :style => 'float:left;clear:right;margin-right:10px' do    
       h2 'Recommended Artists'
-      render_artists(@recommended_artists)
+      ol do 
+        for artist in @recommended_artists
+          li do 
+            a artist.name, :href =>  R(Artist, artist.gid, nil)
+            span { text " (#{artist.score})" }
+          end
+        end
+      end
     end
   end
   
   def _recommended_brands
     div :style => 'float:left;clear:right;margin-right:10px' do    
       h2 'Recommended Brands'
-      render_brands(@recommended_brands)
+      ol do 
+        for brand in @recommended_brands
+          li do 
+            a brand.title, :href =>  R(Brand, brand.pid, nil)
+            span { text " (#{brand.score})" }
+          end
+        end
+      end
     end    
-  end
-
-  def render_brands(brands)
-    ol do 
-      for brand in brands
-        li do 
-          a brand.title, :href =>  R(Brand, brand.pid, nil)
-          span { text " (#{brand.score})" }
-        end
-      end
-    end
-  end
-  
-  def render_artists(artists)
-    ol do 
-      for artist in artists
-        li do 
-          a artist.name, :href =>  R(Artist, artist.gid, nil)
-          span { text " (#{artist.score})" }
-        end
-      end
-    end
   end
   
 end
