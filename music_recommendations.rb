@@ -123,11 +123,19 @@ module MusicRecommendations::Controllers
 
   class MyRecommendations < R '/recommend/lastfm/(.*)'
     def get(profile)
-      @profile = profile
-      top_artists = LastFmProfile.new(@profile).top_artists
-      @recommended_brands = MusicRecommendations::recommender.query_brands(top_artists)
-      @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
-      render :my_recommendations
+      if profile.blank?
+        if input[:profile].blank?
+          redirect R(Index)
+        else
+          redirect R(MyRecommendations, input[:profile])  
+        end
+      else      
+        @profile = profile
+        top_artists = LastFmProfile.new(@profile).top_artists
+        @recommended_brands = MusicRecommendations::recommender.query_brands(top_artists)
+        @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
+        render :my_recommendations
+      end
     end
   end
 end
@@ -152,74 +160,96 @@ module MusicRecommendations::Views
         li { a 'Artists', :href => R(Artists) }
         li { a 'Brands', :href => R(Brands) }
       end
-    end    
-  end
-  
-  def artists
-    div.header! do
-      h1 'List of Artists'
-    end
-    ol do 
-      for artist in @artists
-        li { a artist.name, :href=>R(Brand, artist.gid, nil) }
+      p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }
+      form :method => :get, :action => '/recommend/lastfm/' do
+        input :name => 'profile', :type => 'text'
+        input :type => :submit
       end
     end
   end
   
-  def artist
+  def artists
     div.header! do
-      h1 'Artist: ' + @artist.name
+      h1 'Artists'
     end
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Brands'
-      render_brands(@recommended_brands)
-    end
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Artists'    
-      render_artists(@recommended_artists)
+    _navigation      
+    p 'A selection of artists:'
+    ol do 
+      for artist in @artists
+        li { a artist.name, :href=>R(Artist, artist.gid, nil) }
+      end
     end
   end
-    
+  
   def brands
     div.header! do
       h1 'List of Brands'
     end
+    _navigation 
     ol do 
       for brand in @brands
         li { a brand.title, :href=>R(Brand, brand.pid, nil) }
       end
     end
   end
+
+  def artist
+    div.header! do
+      h1 'Artist: ' + @artist.name
+    end
+    _navigation
+    _link "http://musicbrainz.org/artist/#{@artist.gid}.html"    
+    _recommended_brands
+    _recommended_artists
+  end
+    
+  def brand
+    div.header! do
+      h1 'Brand: ' + @brand.title
+    end
+    _navigation
+    _link "http://www.bbc.co.uk/programmes/#{@brand.pid}"
+    _recommended_brands
+    _recommended_artists
+  end
   
   def my_recommendations
     div.header! do
       h1 "Recommendations for #{@profile}"
     end
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Brands'
-      render_brands(@recommended_brands)
+    _navigation
+    _link "http://last.fm/user/#{@profile}"    
+    _recommended_brands
+    _recommended_artists
+  end
+    
+  private
+  
+  def _navigation
+    ul do
+      li { a('Home', :href => R(Index)) }
+      li { a('Brands', :href => R(Brands)) }
+      li { a('Artists', :href => R(Artists)) }
     end
+  end
+  
+  def _link(url)
+    a url, :href => url, :target => :new
+  end
+
+  def _recommended_artists
     div :style => 'float:left;clear:right;margin-right:10px' do    
       h2 'Recommended Artists'
       render_artists(@recommended_artists)
     end
   end
   
-  def brand
-    div.header! do
-      h1 'Brand: ' + @brand.title
-    end
+  def _recommended_brands
     div :style => 'float:left;clear:right;margin-right:10px' do    
       h2 'Recommended Brands'
       render_brands(@recommended_brands)
-    end
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Artists'
-      render_artists(@recommended_artists)
-    end
+    end    
   end
-  
-  private 
 
   def render_brands(brands)
     ol do 

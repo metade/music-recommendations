@@ -22,7 +22,9 @@ class SemanticSpaceRecommender
   end
   
   def artists
-    return @semanticspace.list_terms.map { |a| ArtistRecommendation.new(a) }
+    artists = @semanticspace.list_terms
+    indexes = (1..20).to_a.map { |i| rand(artists.size) }
+    return indexes.map { |i| ArtistRecommendation.new(artists[i]) }
   end
   
   def brands
