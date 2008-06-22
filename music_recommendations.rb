@@ -60,7 +60,12 @@ module MusicRecommendations
     else
       env.ACCEPT.nil? ? (env.HTTP_ACCEPT.nil? ? 'text/html' : env.HTTP_ACCEPT) : env.ACCEPT
     end
-  end  
+  end
+  
+  # redefine render to fix issue in passenger
+  def render(method)
+    my_layout { self.send(method) }
+  end
   
 end
 
@@ -141,7 +146,8 @@ module MusicRecommendations::Controllers
 end
 
 module MusicRecommendations::Views
-  def layout
+
+  def my_layout
     html do
       body do
         div.container! do
