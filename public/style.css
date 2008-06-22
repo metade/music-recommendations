@@ -1,0 +1,25 @@
+/* @override http://localhost:3301/style.css */
+
+div#container {
+	margin: auto;
+	width: 60em;
+}
+
+div#header {
+}
+
+div#header h1 {
+	margin: 0.5em;
+}
+div#header h2 {
+	margin: 0.5em;
+}
+
+div#navigation {
+	clear: both;
+}
+div#navigation li {
+	margin-left: 1em;
+	display: inline;		
+}
+
