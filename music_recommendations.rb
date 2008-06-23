@@ -37,6 +37,7 @@ end
 
 Camping.goes :MusicRecommendations
 module MusicRecommendations
+  P = 'music recommendations: error'
 
   def self.config
     @@config ||= YAML.load_file('config/semantic_space.yml')
@@ -65,6 +66,11 @@ module MusicRecommendations
   # redefine render to fix issue in passenger
   def render(method)
     my_layout { self.send(method) }
+  end
+  
+  def not_found(type, brand)
+    content = my_layout { Mab.new{h1(P);h2("#{type} #{brand} not found")} }    
+    r(404, content)
   end
   
 end
@@ -97,6 +103,7 @@ module MusicRecommendations::Controllers
 
   class Artist < R '/artists/([\w\d-]{36})(.*?)'
     def get(mbid, format=nil)
+      return not_found('artist', mbid) unless MusicRecommendations::recommender.has_artist(mbid)      
       @artist = ArtistRecommendation.new(mbid)
       @recommended_artists = MusicRecommendations::recommender.artist_artists(mbid)
       @recommended_brands = MusicRecommendations::recommender.artist_brands(mbid)
@@ -122,7 +129,8 @@ module MusicRecommendations::Controllers
 
   class Brand < R '/brands/([\w\d]{8})(.*)'
     def get(brand, format=nil)
-      @brand = BrandRecommendation.new(brand)
+      return not_found('brand', brand) unless MusicRecommendations::recommender.has_brand(brand)
+      @brand = BrandRecommendation.new(brand)      
       @recommended_brands = MusicRecommendations::recommender.brand_brands(brand)
       @recommended_artists = MusicRecommendations::recommender.brand_artists(brand)
 
@@ -149,6 +157,7 @@ module MusicRecommendations::Controllers
       else      
         @profile = profile
         top_artists = LastFmProfile.new(@profile).top_artists
+        return not_found('last.fm profile', profile) if top_artists.nil?
         @recommended_brands = MusicRecommendations::recommender.query_brands(top_artists)
         @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
         render :my_recommendations

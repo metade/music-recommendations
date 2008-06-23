@@ -26,7 +26,7 @@ class SemanticSpaceRecommender
     indexes = (1..20).to_a.map { |i| rand(artists.size) }
     return indexes.map { |i| ArtistRecommendation.new(artists[i]) }
   end
-  
+
   def brands
     return @semanticspace.list_docs(true).map { |b| BrandRecommendation.new(b) }
   end
@@ -63,6 +63,14 @@ class SemanticSpaceRecommender
     artists.keys.each { |gid| @semanticspace.add_term_to_query(query, gid, artists[gid]) }
     results = @semanticspace.search_with_query(query, TERM_SPACE, @dimensions, limit)
     return transform_artist_results(results)
+  end
+  
+  def has_brand(brand)
+    return @semanticspace.list_docs(TRAINING_DOCUMENT_SPACE).include?(brand)
+  end
+
+  def has_artist(artist)
+    return @semanticspace.list_terms.include?(artist)
   end
 
   private
