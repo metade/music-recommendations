@@ -1,25 +1,53 @@
 /* @override http://localhost:3301/style.css */
 
+body {
+
+font-family: Arial, Helvetica, sans-serif;
+font-size: 16px;
+}
+
 div#container {
 	margin: auto;
-	width: 60em;
+
+	width: 800px;
+	height: 100%;
 }
 
 div#header {
+	height: 6em;
 }
-
 div#header h1 {
-	margin: 0.5em;
+	font-size: 30px;
+	color: #0c3b4f;
+	margin-bottom: 4px;
 }
 div#header h2 {
-	margin: 0.5em;
+	font-size: 22px;
+	color: #557c8a;
+	margin-top: 2px;
 }
 
 div#navigation {
-	clear: both;
+	position: absolute;
+	top: 5em; left: 0px;
+	width: 100%; height: 1.5em;
+	background-color: #e7e7e7;
+}
+
+div#navigation ul {
+	width: 800px;
+	margin: auto;
+	margin-top: 0.2em;
 }
 div#navigation li {
-	margin-left: 1em;
+	margin-right: 1em;
 	display: inline;		
+}
+
+div.recommendations {
+	float:left;
+	clear:right;
+	margin: auto;
+	width: 400px;
 }
 

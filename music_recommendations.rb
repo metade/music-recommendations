@@ -177,7 +177,7 @@ module MusicRecommendations::Views
       body do
         div.container! do
           self << yield
-          _navigation        
+          _navigation
         end
       end
     end
@@ -186,32 +186,37 @@ module MusicRecommendations::Views
   def index
     div.header! do
       h1 'music recommendations'
+      h2 'BBC Programmes and Artists recommendations from track play-out data.'
     end
-    p do
-      text 'BBC Programmes and Artists recommendations from '
-      a 'track play-out data', :href => 'http://mashed-audioandmusic.dyndns.org/#brandsartists' 
-      text ' from BBC Radio 1, Radio 2, 6Music and 1Xtra'
-    end
-    p do 
-      text 'Start by browsing by '; a 'artists', :href => R(Artists)
-      text ' or '; a 'brands', :href => R(Brands); text ', i.e. shows/djs'      
-    end
-    p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }    
-    form :method => :get, :action => '/recommend/lastfm/' do
-      input :name => 'profile', :type => 'text'
-      input :type => :submit
+    div.content! do
+      p do
+        text 'BBC Programmes and Artists recommendations from '
+        a 'track play-out data', :href => 'http://mashed-audioandmusic.dyndns.org/#brandsartists' 
+        text ' from BBC Radio 1, Radio 2, 6Music and 1Xtra'
+      end
+      p do 
+        text 'Start by browsing by '; a 'artists', :href => R(Artists)
+        text ' or '; a 'brands', :href => R(Brands); text ', i.e. shows/djs'      
+      end
+      p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }    
+      form :method => :get, :action => '/recommend/lastfm/' do
+        input :name => 'profile', :type => 'text'
+        input :type => :submit
+      end
     end
   end
   
   def about
     div.header! do
-      h1 'music recommendations: about'      
+      h1 'music recommendations: about'
+      h2 'BBC Programmes and Artists recommendations from track play-out data.'      
     end
-    h2 'about the data'
+    
+    h2 'the data'
     p { 'Based on playout data for Radio1, 1Xtra, Radio2 and 6Music from September 2007 until mid-June 2008. ' }
     p { 'See <a href="http://mashed-audioandmusic.dyndns.org/#brandsartists">BBC Audio & Music Interactive at Mashed 2008</a> for more details.' }
 
-    h2 'about the recommendations'
+    h2 'the recommendations'
     p { 'Based on <a href="http://en.wikipedia.org/wiki/Latent_semantic_analysis">Latent Semantic Analysis</a>, a technique used in Information Retrieval. '       }
 
     p { 'Build a term-document matrix based on the artist play per brand: artists are terms, brands are documents.' }
@@ -222,15 +227,19 @@ module MusicRecommendations::Views
       li { text 'recommend brands/artists based on a last.fm profile ' ; a '(example)', :href => R(MyRecommendations, 'metade') }
     end
 
-    h2 'about the recommendation engine'
+    h2 'the recommendation engine'
     p { 'Uses the <a href="http://semanticspace.forge.ecs.soton.ac.uk">Semantic Space</a> engine developed at the <a href="http://www.ecs.soton.ac.uk">University of Southampton</a> by <a href="http://users.ecs.soton.ac.uk/jsh2/">Jonathon Hare</a>.' }
+
+    h2 'the code'
+    p { text 'Hosted on github: '; _link('http://github.com/metade/music-recommendations') }
+
   end
   
   def artists
     div.header! do
-      h1 'music recommendations: artists'      
+      h1 'music recommendations: artists'
+      h2 'A random selection of artists to explore.'
     end
-    p 'A selection of artists:'
     ol do 
       for artist in @artists
         li { a artist.name, :href=>R(Artist, artist.gid, nil) }
@@ -240,7 +249,8 @@ module MusicRecommendations::Views
   
   def brands
     div.header! do
-      h1 'music recommendations: brands'      
+      h1 'music recommendations: brands'
+      h2 'The BBC Radio brands indexed in our recommendation engine.'      
     end
     ol do 
       for brand in @brands
@@ -254,7 +264,7 @@ module MusicRecommendations::Views
       h1 'music recommendations: artist'
       h2  @artist.name
     end
-    _link "http://musicbrainz.org/artist/#{@artist.gid}.html"    
+    p { _link "http://musicbrainz.org/artist/#{@artist.gid}.html" }
     _recommended_brands
     _recommended_artists
   end
@@ -264,16 +274,17 @@ module MusicRecommendations::Views
       h1 "music recommendations: brand"
       h2 @brand.title
     end
-    _link "http://www.bbc.co.uk/programmes/#{@brand.pid}"
+    p { _link "http://www.bbc.co.uk/programmes/#{@brand.pid}" }
     _recommended_brands
     _recommended_artists
   end
   
   def my_recommendations
     div.header! do
-      h1 "music recommendations: for last.fm user #{@profile}"
+      h1 'music recommendations: last.fm profile'
+      h2 "#{@profile}"
     end
-    _link "http://last.fm/user/#{@profile}"    
+    p { _link "http://last.fm/user/#{@profile}" }
     _recommended_brands
     _recommended_artists
   end
@@ -282,11 +293,11 @@ module MusicRecommendations::Views
   
   def _navigation
     div.navigation! do
-      p do
-        a('Home', :href => R(Index)); text ' | '
-        a('About', :href => R(About)); text ' | '
-        a('Brands', :href => R(Brands)); text ' | '
-        a('Artists', :href => R(Artists)); text ' | '
+      ul do
+        li { a('Home', :href => R(Index)) }
+        li { a('About', :href => R(About)) }
+        li { a('Brands', :href => R(Brands)) }
+        li { a('Artists', :href => R(Artists)) }
       end
     end
   end
@@ -296,13 +307,13 @@ module MusicRecommendations::Views
   end
 
   def _recommended_artists
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Artists'
+    div.recommendations do    
+      h3 'Recommended Artists'
       ol do 
         for artist in @recommended_artists
           li do 
             a artist.name, :href =>  R(Artist, artist.gid, nil)
-            span { text " (#{artist.score})" }
+            span { text " (#{_score(artist.score)})" }
           end
         end
       end
@@ -310,17 +321,21 @@ module MusicRecommendations::Views
   end
   
   def _recommended_brands
-    div :style => 'float:left;clear:right;margin-right:10px' do    
-      h2 'Recommended Brands'
+    div.recommendations do    
+      h3 'Recommended Brands'
       ol do 
         for brand in @recommended_brands
           li do 
             a brand.title, :href =>  R(Brand, brand.pid, nil)
-            span { text " (#{brand.score})" }
+            span { text " (#{_score(brand.score)})" }
           end
         end
       end
     end    
+  end
+  
+  def _score(score)
+    "%.3f" % score
   end
   
 end
