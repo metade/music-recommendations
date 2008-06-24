@@ -69,7 +69,7 @@ module MusicRecommendations
   end
   
   def not_found(type, brand)
-    content = my_layout { Mab.new{h1(P);h2("#{type} #{brand} not found")} }    
+    content = my_layout { Mab.new{div.header! { h1(P);h2("#{type} #{brand} not found")} } }    
     r(404, content)
   end
   
