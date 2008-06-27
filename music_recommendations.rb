@@ -146,21 +146,30 @@ module MusicRecommendations::Controllers
     end
   end
 
-  class MyRecommendations < R '/recommend/lastfm/(.*)'
-    def get(profile)
+  class MyRecommendations < R '/recommend/lastfm/([\w]*?)', '/recommend/lastfm/([\w]*?)(\.json)'
+    def get(profile, format=nil)
       if profile.blank?
         if input[:profile].blank?
           redirect R(Index)
         else
           redirect R(MyRecommendations, input[:profile])  
         end
-      else      
+      else
         @profile = profile
         top_artists = LastFmProfile.new(@profile).top_artists
         return not_found('last.fm profile', profile) if top_artists.nil?
         @recommended_brands = MusicRecommendations::recommender.query_brands(top_artists)
         @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
-        render :my_recommendations
+
+        case accept(format)
+          when %r{application/json}
+            @headers['Content-Type'] = 'application/json'
+            { :profile => @profile,
+              :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+              :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+            }.to_json
+          else render :my_recommendations          
+        end
       end
     end
   end
@@ -224,7 +233,7 @@ module MusicRecommendations::Views
     ul do
       li { text 'recommend brands/artists based on another brand ' ; a '(example)', :href => R(Brand, 'b006wkqb', nil) }
       li { text 'recommend brands/artists based on another artist ' ; a '(example)', :href => R(Artist, 'ada7a83c-e3e1-40f1-93f9-3e73dbc9298a', nil) }
-      li { text 'recommend brands/artists based on a last.fm profile ' ; a '(example)', :href => R(MyRecommendations, 'metade') }
+      li { text 'recommend brands/artists based on a last.fm profile ' ; a '(example)', :href => R(MyRecommendations, 'metade', nil) }
     end
 
     h2 'the recommendation engine'
