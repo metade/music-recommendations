@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /artists/
+Disallow: /brands/
+
