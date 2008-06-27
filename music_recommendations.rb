@@ -178,7 +178,7 @@ end
 module MusicRecommendations::Views
 
   def my_layout
-    html do
+    xhtml_transitional do
       head do
         title 'music recommendations'
         link :rel => 'stylesheet', :type => 'text/css', :href => R(Style), :media => 'screen'
@@ -209,8 +209,10 @@ module MusicRecommendations::Views
       end
       p { text 'Suggest some artists/brands based on my '; a 'Last.fm', :href => 'http://last.fm'; text ' profile:' }    
       form :method => :get, :action => '/recommend/lastfm/' do
-        input :name => 'profile', :type => 'text'
-        input :type => :submit
+        p do
+          input :name => 'profile', :type => 'text'
+          input :type => :submit
+        end
       end
     end
   end
