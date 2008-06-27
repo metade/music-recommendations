@@ -1,4 +1,3 @@
-/* @override http://localhost:3301/style.css */
 
 body {
 
@@ -29,7 +28,7 @@ div#header h2 {
 
 div#navigation {
 	position: absolute;
-	top: 5em; left: 0px;
+	top: 5.5em; left: 0px;
 	width: 100%; height: 1.5em;
 	background-color: #e7e7e7;
 }
