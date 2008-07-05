@@ -56,8 +56,10 @@ module MusicRecommendations
   end
   
   def accept(format=nil)
-    if (format and format =~ /.js(on)?/)
+    if (format and format =~ /\.js(on)?/)
       'application/json'
+    elsif (format and format=~ /\.svg/)
+      'image/svg+xml'
     else
       env.ACCEPT.nil? ? (env.HTTP_ACCEPT.nil? ? 'text/html' : env.HTTP_ACCEPT) : env.ACCEPT
     end
@@ -71,6 +73,35 @@ module MusicRecommendations
   def not_found(type, brand)
     content = my_layout { Mab.new{div.header! { h1(P);h2("#{type} #{brand} not found")} } }    
     r(404, content)
+  end
+  
+  def construct_svg()
+    x = Builder::XmlMarkup.new
+    x.instruct!
+    x.declare! :DOCTYPE, :svg, :PUBLIC, "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"
+    x.svg(
+      :xmlns => "http://www.w3.org/2000/svg",         
+      'xmlns:xl' => "http://www.w3.org/1999/xlink", 
+      :version => "1.1",
+      :width => '3cm',
+      :height => '3cm') do |svg|
+      svg.rect(:x=>'0.5cm', :y=>'0.5cm', :width=>'2cm', :height=>'1cm')
+      svg.text 'foo'
+    end
+    # %[<?xml version="1.0" standalone="no"?>
+    #   <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+    #     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+    #   <svg width="5cm" height="4cm" version="1.1"
+    #        xmlns="http://www.w3.org/2000/svg">
+    #       <rect x="0.5cm" y="0.5cm" width="2cm" height="1cm"/>
+    #       <rect x="0.5cm" y="2cm" width="1cm" height="1.5cm"/>
+    #       <rect x="3cm" y="0.5cm" width="1.5cm" height="2cm"/>
+    #       <rect x="3.5cm" y="3cm" width="1cm" height="0.5cm"/>
+    #     <!-- Show outline of canvas using 'rect' element -->
+    #     <rect x=".01cm" y=".01cm" width="4.98cm" height="3.98cm"
+    #           fill="none" stroke="blue" stroke-width=".02cm" />
+    #   </svg>
+    # ]
   end
   
 end
@@ -109,7 +140,7 @@ module MusicRecommendations::Controllers
       @recommended_brands = MusicRecommendations::recommender.artist_brands(mbid)
 
       case accept(format)
-        when %r{application/json}
+        when 'application/json'
           @headers['Content-Type'] = 'application/json'
           { :artist => @artist.to_hash,
             :recommended_artists => @recommended_artists.map { |r| r.to_hash },
@@ -135,7 +166,7 @@ module MusicRecommendations::Controllers
       @recommended_artists = MusicRecommendations::recommender.brand_artists(brand)
 
       case accept(format)
-        when %r{application/json}
+        when 'application/json'
           @headers['Content-Type'] = 'application/json'
           { :brand => @brand.to_hash,
             :recommended_artists => @recommended_artists.map { |r| r.to_hash },
@@ -146,7 +177,7 @@ module MusicRecommendations::Controllers
     end
   end
 
-  class MyRecommendations < R '/recommend/lastfm/([\w]*?)', '/recommend/lastfm/([\w]*?)(\.json)'
+  class MyRecommendations < R '/recommend/lastfm/([\w]*?)', '/recommend/lastfm/([\w]*?)(\.json|\.svg)'
     def get(profile, format=nil)
       if profile.blank?
         if input[:profile].blank?
@@ -162,12 +193,16 @@ module MusicRecommendations::Controllers
         @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
 
         case accept(format)
-          when %r{application/json}
+          when 'application/json'
             @headers['Content-Type'] = 'application/json'
             { :profile => @profile,
               :recommended_artists => @recommended_artists.map { |r| r.to_hash },
               :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
             }.to_json
+          when 'image/svg+xml'
+            puts 'dooo'
+            @headers['Content-Type'] = 'image/svg+xml'
+            construct_svg()
           else render :my_recommendations          
         end
       end
@@ -188,6 +223,7 @@ module MusicRecommendations::Views
           self << yield
           _navigation
         end
+        _google_analytics
       end
     end
   end
@@ -301,6 +337,19 @@ module MusicRecommendations::Views
   end
     
   private
+  
+  def _google_analytics
+    return if MusicRecommendations.config[:google_analytics].blank?
+    script(:type => "text/javascript") do
+      text %[var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");]
+      text %[document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));]
+    end
+    script(:type => "text/javascript") do
+      text %[var pageTracker = _gat._getTracker("#{MusicRecommendations.config[:google_analytics]}");]
+      text 'pageTracker._initData();'
+      text 'pageTracker._trackPageview();'
+    end
+  end
   
   def _navigation
     div.navigation! do
