@@ -58,6 +58,8 @@ module MusicRecommendations
   def accept(format=nil)
     if (format and format =~ /\.js(on)?/)
       'application/json'
+    elsif (format and format =~ /\.ya?ml/)
+      'application/x-yaml'
     elsif (format and format=~ /\.svg/)
       'image/svg+xml'
     else
@@ -140,28 +142,44 @@ module MusicRecommendations::Controllers
       @recommended_brands = MusicRecommendations::recommender.artist_brands(mbid)
 
       case accept(format)
+        when 'application/x-yaml'
+          @headers['Content-Type'] = 'application/x-yaml'
+          make_artists_hash.to_yaml
         when 'application/json'
           @headers['Content-Type'] = 'application/json'
-          { :artist => @artist.to_hash,
-            :recommended_artists => @recommended_artists.map { |r| r.to_hash },
-            :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
-          }.to_json
+          make_artists_hash.to_json
         else render :artist
       end
     end
+    
+    private
+    def make_artists_hash
+      { :artist => @artist.to_hash,
+        :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+        :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+      }
+    end
   end
   
-  class Brands < R '/brands', '/brands(\.js|\.json)'
+  class Brands < R '/brands', '/brands(\.js|\.json|\.ya?ml)'
     def get(format=nil)
       @brands = MusicRecommendations::recommender.brands.sort
+      
       case accept(format)
+        when 'application/x-yaml'
+          @headers['Content-Type'] = 'application/x-yaml'
+          make_brands_hash.to_yaml          
         when 'application/json'
           @headers['Content-Type'] = 'application/json'
-          brands_hash = {}
-          @brands.each { |b| brands_hash[b.pid] = b.title }
-          brands_hash.to_json
+          make_brands_hash.to_json
         else render :brands
-      end
+      end      
+    end
+    
+    private
+    def make_brands_hash
+      brands_hash = {}
+      @brands.each { |b| brands_hash[b.pid] = b.title }      
     end
   end
 
@@ -173,18 +191,26 @@ module MusicRecommendations::Controllers
       @recommended_artists = MusicRecommendations::recommender.brand_artists(brand)
 
       case accept(format)
+        when 'application/x-yaml'
+          @headers['Content-Type'] = 'application/x-yaml'
+          make_brands_hash.to_yaml
         when 'application/json'
           @headers['Content-Type'] = 'application/json'
-          { :brand => @brand.to_hash,
-            :recommended_artists => @recommended_artists.map { |r| r.to_hash },
-            :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
-          }.to_json
+          make_brands_hash.to_json
         else render :brand
       end
     end
+    
+    private
+    def make_brands_hash
+      { :brand => @brand.to_hash,
+        :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+        :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+      }
+    end
   end
 
-  class MyRecommendations < R '/recommend/lastfm/([\w]*?)', '/recommend/lastfm/([\w]*?)(\.json|\.svg)'
+  class MyRecommendations < R '/recommend/lastfm/([\w]*?)', '/recommend/lastfm/([\w]*?)(\.json|\.svg|\.ya?ml)'
     def get(profile, format=nil)
       if profile.blank?
         if input[:profile].blank?
@@ -200,12 +226,12 @@ module MusicRecommendations::Controllers
         @recommended_artists = MusicRecommendations::recommender.query_artists(top_artists)
 
         case accept(format)
+          when 'application/x-yaml'
+            @headers['Content-Type'] = 'application/x-yaml'
+            make_recommendations_hash.to_yaml
           when 'application/json'
             @headers['Content-Type'] = 'application/json'
-            { :profile => @profile,
-              :recommended_artists => @recommended_artists.map { |r| r.to_hash },
-              :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
-            }.to_json
+            make_recommendations_hash.to_json
           when 'image/svg+xml'
             puts 'dooo'
             @headers['Content-Type'] = 'image/svg+xml'
@@ -213,6 +239,14 @@ module MusicRecommendations::Controllers
           else render :my_recommendations          
         end
       end
+    end
+    
+    private
+    def make_recommendations_hash
+      { :profile => @profile,
+        :recommended_artists => @recommended_artists.map { |r| r.to_hash },
+        :recommended_brands => @recommended_brands.map { |r| r.to_hash }, 
+      }
     end
   end
 end
