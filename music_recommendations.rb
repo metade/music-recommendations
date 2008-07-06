@@ -151,10 +151,17 @@ module MusicRecommendations::Controllers
     end
   end
   
-  class Brands < R '/brands'
-    def get
+  class Brands < R '/brands', '/brands(\.js|\.json)'
+    def get(format=nil)
       @brands = MusicRecommendations::recommender.brands.sort
-      render :brands
+      case accept(format)
+        when 'application/json'
+          @headers['Content-Type'] = 'application/json'
+          brands_hash = {}
+          @brands.each { |b| brands_hash[b.pid] = b.title }
+          brands_hash.to_json
+        else render :brands
+      end
     end
   end
 
