@@ -179,7 +179,8 @@ module MusicRecommendations::Controllers
     private
     def make_brands_hash
       brands_hash = {}
-      @brands.each { |b| brands_hash[b.pid] = b.title }      
+      @brands.each { |b| brands_hash[b.pid] = b.title }
+      brands_hash
     end
   end
 
