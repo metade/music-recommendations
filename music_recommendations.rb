@@ -77,35 +77,29 @@ module MusicRecommendations
     r(404, content)
   end
   
-  def construct_svg()
-    x = Builder::XmlMarkup.new
+  def construct_svg
+    svg_string = ''
+    x = Builder::XmlMarkup.new(:target => svg_string, :indent => 1)
     x.instruct!
     x.declare! :DOCTYPE, :svg, :PUBLIC, "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"
-    x.svg(
-      :xmlns => "http://www.w3.org/2000/svg",         
-      'xmlns:xl' => "http://www.w3.org/1999/xlink", 
-      :version => "1.1",
-      :width => '3cm',
-      :height => '3cm') do |svg|
-      svg.rect(:x=>'0.5cm', :y=>'0.5cm', :width=>'2cm', :height=>'1cm')
-      svg.text 'foo'
+    x.svg(:xmlns => "http://www.w3.org/2000/svg",         
+          'xmlns:xl' => "http://www.w3.org/1999/xlink", 
+          :version => "1.1",
+          :width => 200,
+          :height => 350) do |svg|
+
+      @recommended_brands.each_with_index do |brand, i|
+        y = (i*50)+2
+        svg.image(
+          :x=> 2, :y => y, 
+          :width => 46, :height => 46, 
+          'xl:href' => "http://www.bbc.co.uk/music/images/brands/1col_in_sq/#{brand.pid}.jpg")
+        svg.text(brand.title, :x => 50, :y => y+30)
+        svg.line(:x1 => 50, :y1 => y+45, :x2 => 50 + (150*brand.score), :y2 => y+45, :style => 'stroke:rgb(99,99,99);stroke-width:2')
+      end
     end
-    # %[<?xml version="1.0" standalone="no"?>
-    #   <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
-    #     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-    #   <svg width="5cm" height="4cm" version="1.1"
-    #        xmlns="http://www.w3.org/2000/svg">
-    #       <rect x="0.5cm" y="0.5cm" width="2cm" height="1cm"/>
-    #       <rect x="0.5cm" y="2cm" width="1cm" height="1.5cm"/>
-    #       <rect x="3cm" y="0.5cm" width="1.5cm" height="2cm"/>
-    #       <rect x="3.5cm" y="3cm" width="1cm" height="0.5cm"/>
-    #     <!-- Show outline of canvas using 'rect' element -->
-    #     <rect x=".01cm" y=".01cm" width="4.98cm" height="3.98cm"
-    #           fill="none" stroke="blue" stroke-width=".02cm" />
-    #   </svg>
-    # ]
-  end
-  
+    svg_string
+  end  
 end
 
 module MusicRecommendations::Controllers
@@ -234,7 +228,6 @@ module MusicRecommendations::Controllers
             @headers['Content-Type'] = 'application/json'
             make_recommendations_hash.to_json
           when 'image/svg+xml'
-            puts 'dooo'
             @headers['Content-Type'] = 'image/svg+xml'
             construct_svg()
           else render :my_recommendations          
