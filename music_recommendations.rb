@@ -90,12 +90,14 @@ module MusicRecommendations
 
       @recommended_brands.each_with_index do |brand, i|
         y = (i*50)+2
-        svg.image(
-          :x=> 2, :y => y, 
-          :width => 46, :height => 46, 
-          'xl:href' => "http://www.bbc.co.uk/music/images/brands/1col_in_sq/#{brand.pid}.jpg")
-        svg.text(brand.title, :x => 50, :y => y+30)
-        svg.line(:x1 => 50, :y1 => y+45, :x2 => 50 + (150*brand.score), :y2 => y+45, :style => 'stroke:rgb(99,99,99);stroke-width:2')
+        svg.a('xl:href' => "http://www.bbc.co.uk/programmes/#{brand.pid}", 'xl:type' => 'simple') do |link|
+          link.image(
+            :x=> 2, :y => y, 
+            :width => 46, :height => 46, 
+            'xl:href' => "http://www.bbc.co.uk/music/images/brands/1col_in_sq/#{brand.pid}.jpg")
+          link.text(brand.title, 'font-family' => 'Arial', 'font-size' => 12, :x => 50, :y => y+30)
+          link.line(:x1 => 50, :y1 => y+45, :x2 => 50 + (150*brand.score), :y2 => y+45, :style => 'stroke:rgb(99,99,99);stroke-width:2')
+        end
       end
     end
     svg_string
